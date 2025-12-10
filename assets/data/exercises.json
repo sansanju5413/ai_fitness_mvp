@@ -1,0 +1,26 @@
+[
+  {
+    "id": "push_up",
+    "name": "Push-Up",
+    "muscleGroup": "Chest",
+    "difficulty": "beginner",
+    "equipment": "Bodyweight",
+    "description": "Start in a plank position, lower your chest to the floor, then push back up."
+  },
+  {
+    "id": "squat",
+    "name": "Bodyweight Squat",
+    "muscleGroup": "Legs",
+    "difficulty": "beginner",
+    "equipment": "Bodyweight",
+    "description": "Stand with feet shoulder-width apart, bend your knees and hips to lower, then stand back up."
+  },
+  {
+    "id": "plank",
+    "name": "Plank",
+    "muscleGroup": "Core",
+    "difficulty": "beginner",
+    "equipment": "Bodyweight",
+    "description": "Hold a straight-body position supporting yourself on forearms and toes."
+  }
+]
