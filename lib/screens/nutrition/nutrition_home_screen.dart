@@ -102,76 +102,133 @@ class _NutritionHomeScreenState extends State<NutritionHomeScreen>
         ],
       ),
       scrollable: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _CalorieRing(
-            animation: _ringController,
-            consumed: consumed.calories,
-            target: targets.calories,
-            remaining: remaining,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.asset(
+                        'assets/images/Schwinn_IC3_Indoor_Cycling_Bike_Review.jpg',
+                        fit: BoxFit.cover,
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.55),
+                              Colors.black.withOpacity(0.35),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Fuel your training',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineMedium
+                                  ?.copyWith(color: Colors.white),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Stay on target with clear macros and hydration.',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(color: Colors.white70),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              _CalorieRing(
+                animation: _ringController,
+                consumed: consumed.calories,
+                target: targets.calories,
+                remaining: remaining,
+              ),
+              const SizedBox(height: 14),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isNarrow = constraints.maxWidth < 420;
+                  if (isNarrow) {
+                    return Column(
+                      children: [
+                        _MacroRow(
+                          animation: _macroController,
+                          consumed: consumed,
+                          targets: targets,
+                        ),
+                      ],
+                    );
+                  }
+                  return _MacroRow(
+                    animation: _macroController,
+                    consumed: consumed,
+                    targets: targets,
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              _QuickActions(onTap: _onQuickAction),
+              const SizedBox(height: 16),
+              _MealTimeline(
+                animation: _timelineController,
+                meals: _buildMeals(consumed),
+                onAdd: (slot) => _showSnack('Add to ${slot.name}'),
+              ),
+              const SizedBox(height: 16),
+              _HydrationBottle(
+                count: _hydration,
+                target: 8,
+                onAdd: () {
+                  setState(() => _hydration = math.min(8, _hydration + 1));
+                  _showSnack('Nice! ${_hydration}/8 glasses');
+                },
+              ),
+              const SizedBox(height: 16),
+              _Insights(
+                controller: _insightsController,
+                items: _insights,
+              ),
+              const SizedBox(height: 20),
+              const SectionHeader(
+                title: 'Today\'s meals',
+                subtitle: 'Tap a meal to see details',
+              ),
+              const SizedBox(height: 8),
+              _MealPlanList(mealPlan: mealPlan),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.restaurant),
+                  label: const Text('Log today\'s food'),
+                  onPressed: () => Navigator.pushNamed(context, '/food-log'),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isNarrow = constraints.maxWidth < 360;
-              if (isNarrow) {
-                return Column(
-                  children: [
-                    _MacroRow(
-                      animation: _macroController,
-                      consumed: consumed,
-                      targets: targets,
-                    ),
-                  ],
-                );
-              }
-              return _MacroRow(
-                animation: _macroController,
-                consumed: consumed,
-                targets: targets,
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-          _QuickActions(onTap: _onQuickAction),
-          const SizedBox(height: 16),
-          _MealTimeline(
-            animation: _timelineController,
-            meals: _buildMeals(consumed),
-            onAdd: (slot) => _showSnack('Add to ${slot.name}'),
-          ),
-          const SizedBox(height: 16),
-          _HydrationBottle(
-            count: _hydration,
-            target: 8,
-            onAdd: () {
-              setState(() => _hydration = math.min(8, _hydration + 1));
-              _showSnack('Nice! ${_hydration}/8 glasses');
-            },
-          ),
-          const SizedBox(height: 16),
-          _Insights(
-            controller: _insightsController,
-            items: _insights,
-          ),
-          const SizedBox(height: 20),
-          const SectionHeader(
-            title: 'Today\'s meals',
-            subtitle: 'Tap a meal to see details',
-          ),
-          const SizedBox(height: 8),
-          _MealPlanList(mealPlan: mealPlan),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.restaurant),
-              label: const Text('Log today\'s food'),
-              onPressed: () => Navigator.pushNamed(context, '/food-log'),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -331,24 +388,19 @@ class _CalorieRing extends StatelessWidget {
           SizedBox(
             height: 140,
             width: 140,
-            child: AnimatedBuilder(
-              animation: animation,
-              builder: (context, _) {
-                return CustomPaint(
-                  painter: _RingPainter(
-                    progress: ratio * animation.value,
+            child: CustomPaint(
+              painter: _RingPainter(
+                progress: ratio,
+              ),
+              child: Center(
+                child: Text(
+                  '${consumed.toInt()} kcal',
+                  style: textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
-                  child: Center(
-                    child: Text(
-                      '${consumed.toInt()} kcal',
-                      style: textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                );
-              },
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -462,17 +514,7 @@ class _MacroRow extends StatelessWidget {
                 padding: EdgeInsets.only(
                   right: entry.key == cards.length - 1 ? 0 : 8,
                 ),
-                child: AnimatedBuilder(
-                  animation: animation,
-                  builder: (_, child) => Transform.translate(
-                    offset: Offset(-20 * (1 - animation.value), 0),
-                    child: Opacity(
-                      opacity: animation.value,
-                      child: child,
-                    ),
-                  ),
-                  child: entry.value,
-                ),
+                child: entry.value,
               ),
             ),
           )
@@ -570,7 +612,7 @@ class _QuickActions extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: items
           .map(
-            (item) => _BounceButton(
+            (item) => _QuickActionButton(
               label: item.$1,
               icon: item.$2,
               onTap: () => onTap(item.$1),
@@ -581,75 +623,42 @@ class _QuickActions extends StatelessWidget {
   }
 }
 
-class _BounceButton extends StatefulWidget {
+class _QuickActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback onTap;
 
-  const _BounceButton({
+  const _QuickActionButton({
     required this.label,
     required this.icon,
     required this.onTap,
   });
 
   @override
-  State<_BounceButton> createState() => _BounceButtonState();
-}
-
-class _BounceButtonState extends State<_BounceButton>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      lowerBound: 0.9,
-      upperBound: 1.05,
-      duration: const Duration(milliseconds: 180),
-      value: 1,
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => _controller.reverse(),
-      onTapUp: (_) {
-        _controller.forward();
-        widget.onTap();
-      },
-      onTapCancel: () => _controller.forward(),
-      child: ScaleTransition(
-        scale: _controller,
-        child: Column(
-          children: [
-            Container(
-              height: 60,
-              width: 60,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white12,
-              ),
-              child: Icon(widget.icon, color: Colors.white),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(32),
+      child: Column(
+        children: [
+          Container(
+            height: 60,
+            width: 60,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white12,
             ),
-            const SizedBox(height: 6),
-            Text(
-              widget.label,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.white70),
-            ),
-          ],
-        ),
+            child: Icon(icon, color: Colors.white),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: Colors.white70),
+          ),
+        ],
       ),
     );
   }
@@ -684,21 +693,11 @@ class _MealTimeline extends StatelessWidget {
                 .asMap()
                 .entries
                 .map(
-                  (entry) => AnimatedBuilder(
-                    animation: animation,
-                    builder: (_, child) => Transform.translate(
-                      offset: Offset(-30 * (1 - animation.value), 0),
-                      child: Opacity(
-                        opacity: animation.value,
-                        child: child,
-                      ),
-                    ),
-                    child: _MealTile(
-                      slot: entry.value,
-                      isActive: _isCurrentMeal(now, entry.value),
-                      isLast: entry.key == meals.length - 1,
-                      onAdd: () => onAdd(entry.value),
-                    ),
+                  (entry) => _MealTile(
+                    slot: entry.value,
+                    isActive: _isCurrentMeal(now, entry.value),
+                    isLast: entry.key == meals.length - 1,
+                    onAdd: () => onAdd(entry.value),
                   ),
                 )
                 .toList(),
@@ -864,9 +863,7 @@ class _HydrationBottle extends StatelessWidget {
                     border: Border.all(color: Colors.white24),
                   ),
                 ),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeOut,
+                Container(
                   width: 70,
                   height: 140 * fill,
                   decoration: BoxDecoration(

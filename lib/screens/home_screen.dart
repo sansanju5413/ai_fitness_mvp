@@ -92,13 +92,7 @@ class _HomeDashboard extends StatefulWidget {
   State<_HomeDashboard> createState() => _HomeDashboardState();
 }
 
-class _HomeDashboardState extends State<_HomeDashboard>
-    with TickerProviderStateMixin {
-  late final AnimationController _heroController;
-  late final Animation<Offset> _heroSlide;
-  late final Animation<double> _heroFade;
-
-  late final AnimationController _staggerController;
+class _HomeDashboardState extends State<_HomeDashboard> {
 
   bool _isLoading = true;
   bool _isRefreshing = false;
@@ -134,36 +128,11 @@ class _HomeDashboardState extends State<_HomeDashboard>
   void initState() {
     super.initState();
 
-    _heroController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-    _heroSlide = Tween<Offset>(
-      begin: const Offset(0.08, 0),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _heroController,
-        curve: Curves.easeOutCubic,
-      ),
-    );
-    _heroFade = CurvedAnimation(
-      parent: _heroController,
-      curve: Curves.easeOut,
-    );
-
-    _staggerController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-
     _loadData();
   }
 
   @override
   void dispose() {
-    _heroController.dispose();
-    _staggerController.dispose();
     super.dispose();
   }
 
@@ -178,8 +147,6 @@ class _HomeDashboardState extends State<_HomeDashboard>
       setState(() {
         _isLoading = false;
       });
-      _heroController.forward();
-      _staggerController.forward();
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -263,10 +230,8 @@ class _HomeDashboardState extends State<_HomeDashboard>
         final width = constraints.maxWidth;
         final isSmall = width < 360;
         final isNarrow = width < 600;
-        final padding = EdgeInsets.symmetric(
-          horizontal: isSmall ? 12 : 16,
-          vertical: 12,
-        );
+        final horizontal = isSmall ? 12.0 : 16.0;
+        final padding = EdgeInsets.symmetric(horizontal: horizontal, vertical: 12);
 
         final content = RefreshIndicator(
           color: AppTheme.primary,
@@ -277,149 +242,177 @@ class _HomeDashboardState extends State<_HomeDashboard>
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: padding,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (_isLoading)
-                        const _HeroSkeleton()
-                      else
-                        RepaintBoundary(
-                          child: _HeroSection(
-                            profileName: widget.profileName,
-                            slide: _heroSlide,
-                            fade: _heroFade,
-                          ),
-                        ),
-                      const SizedBox(height: 20),
-                      if (widget.workoutTemplate != null ||
-                          widget.nutritionTemplate != null)
-                        RepaintBoundary(
-                          child: _TemplatePlanCard(
-                            workoutTemplate: widget.workoutTemplate,
-                            nutritionTemplate: widget.nutritionTemplate,
-                          ),
-                        ),
-                      if (widget.workoutTemplate != null ||
-                          widget.nutritionTemplate != null)
-                        const SizedBox(height: 20),
-                      Row(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 720),
+                    child: Padding(
+                      padding: padding,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: SectionHeader(
-                              title: 'Today\'s snapshot',
-                              subtitle:
-                                  'Keep momentum with quick actions',
+                          RepaintBoundary(
+                            child: _isLoading
+                                ? const _HeroSkeleton()
+                                : _HeroSection(profileName: widget.profileName),
+                          ),
+                          const SizedBox(height: 16),
+                          if (_isOffline) const _OfflineBadge(),
+                          if (_isOffline) const SizedBox(height: 8),
+                          LayoutBuilder(
+                            builder: (context, size) {
+                              final compact = size.maxWidth < 420;
+                              return Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: [
+                                  SizedBox(
+                                    width: compact ? (size.maxWidth - 10) / 2 : null,
+                                    child: _ProgressStatCard(
+                                      label: 'Workout',
+                                      value: _workoutCompletion,
+                                      icon: Icons.fitness_center,
+                                      color: AppTheme.primary,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: compact ? (size.maxWidth - 10) / 2 : null,
+                                    child: _ProgressStatCard(
+                                      label: 'Nutrition',
+                                      value: _nutritionCompletion,
+                                      icon: Icons.restaurant,
+                                      color: AppTheme.secondary,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: compact ? (size.maxWidth - 10) / 2 : null,
+                                    child: _ProgressStatCard(
+                                      label: 'Recovery',
+                                      value: _recoveryScore,
+                                      icon: Icons.health_and_safety,
+                                      color: AppTheme.tertiary,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          RepaintBoundary(
+                            child: _TemplatePlanCard(
+                              workoutTemplate: widget.workoutTemplate,
+                              nutritionTemplate: widget.nutritionTemplate,
                             ),
                           ),
-                          if (_isOffline)
-                            const _OfflineBadge(),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      RepaintBoundary(
-                        child: _isLoading
-                            ? const _ProgressRingSkeleton()
-                            : _TodayProgressRing(
-                                workout: _workoutCompletion,
-                                nutrition: _nutritionCompletion,
-                                recovery: _recoveryScore,
-                              ),
-                      ),
-                      const SizedBox(height: 16),
-                      RepaintBoundary(
-                        child: _QuickActionsSection(
-                          controller: _staggerController,
-                          isNarrow: isNarrow,
-                          hasError: _hasError,
-                          isLoading: _isLoading,
-                          onWorkout: () => _safeAction(() async {
-                            await Navigator.of(context).push(
-                              _slideRightRoute(const AiWorkoutScreen()),
-                            );
-                          }),
-                          onNutrition: () => _safeAction(() async {
-                            await Navigator.of(context).push(
-                              _slideRightRoute(const FoodLogScreen()),
-                            );
-                          }),
-                          onAi: () => _safeAction(() async {
-                            await Navigator.of(context).push(
-                              _slideRightRoute(const AiChatScreen()),
-                            );
-                          }),
-                          onExercises: () => _safeAction(() async {
-                            await Navigator.of(context).push(
-                              _slideRightRoute(const ExercisesScreen()),
-                            );
-                          }),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SectionHeader(
-                              title: 'Recovery & habits',
-                              subtitle:
-                                  'Balance training with mobility and sleep',
+                          const SizedBox(height: 16),
+                          SectionHeader(
+                            title: 'Focus for today',
+                            subtitle: 'Quick entries built for mobile',
+                            trailing: IconButton(
+                              icon: const Icon(Icons.refresh, color: Colors.white70),
+                              onPressed: _onRefresh,
                             ),
                           ),
-                          const _BellReminderIcon(),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      RepaintBoundary(
-                        child: _RecoveryHabitsCard(
-                          habits: _habits,
-                          isLoading: _isLoading,
-                          onToggle: _onToggleHabit,
-                          onReorder: _onReorderHabit,
-                        ),
-                      ),
-                      if (_hasError)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: SelectableText.rich(
-                            TextSpan(
-                              children: [
+                          const SizedBox(height: 12),
+                          RepaintBoundary(
+                            child: _isLoading
+                                ? const _ProgressRingSkeleton()
+                                : GlassCard(
+                                    padding: const EdgeInsets.all(14),
+                                    child: _TodayProgressRing(
+                                      workout: _workoutCompletion,
+                                      nutrition: _nutritionCompletion,
+                                      recovery: _recoveryScore,
+                                    ),
+                                  ),
+                          ),
+                          const SizedBox(height: 14),
+                          RepaintBoundary(
+                            child: _QuickActionsSection(
+                              isNarrow: isNarrow,
+                              hasError: _hasError,
+                              isLoading: _isLoading,
+                              onWorkout: () => _safeAction(() async {
+                                await Navigator.of(context).push(
+                                  _slideRightRoute(const AiWorkoutScreen()),
+                                );
+                              }),
+                              onNutrition: () => _safeAction(() async {
+                                await Navigator.of(context).push(
+                                  _slideRightRoute(const FoodLogScreen()),
+                                );
+                              }),
+                              onAi: () => _safeAction(() async {
+                                await Navigator.of(context).push(
+                                  _slideRightRoute(const AiChatScreen()),
+                                );
+                              }),
+                              onExercises: () => _safeAction(() async {
+                                await Navigator.of(context).push(
+                                  _slideRightRoute(const ExercisesScreen()),
+                                );
+                              }),
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          SectionHeader(
+                            title: 'Recovery & habits',
+                            subtitle: 'Balance training with mobility and sleep',
+                            trailing: const _BellReminderIcon(),
+                          ),
+                          const SizedBox(height: 12),
+                          RepaintBoundary(
+                            child: _RecoveryHabitsCard(
+                              habits: _habits,
+                              isLoading: _isLoading,
+                              onToggle: _onToggleHabit,
+                              onReorder: _onReorderHabit,
+                            ),
+                          ),
+                          if (_hasError)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 12),
+                              child: SelectableText.rich(
                                 TextSpan(
-                                  text: 'Error: ',
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    color: Colors.redAccent,
-                                    fontWeight: FontWeight.bold,
+                                  children: [
+                                    TextSpan(
+                                      text: 'Error: ',
+                                      style: textTheme.bodyMedium?.copyWith(
+                                        color: Colors.redAccent,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text:
+                                          'Some data may be out of date. Pull to refresh.',
+                                      style: textTheme.bodyMedium?.copyWith(
+                                        color:
+                                            Colors.redAccent.withOpacity(0.9),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          if (_isRefreshing)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 8),
+                              child: Center(
+                                child: SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppTheme.primary,
+                                    ),
                                   ),
                                 ),
-                                TextSpan(
-                                  text:
-                                      'Some data may be out of date. Pull to refresh.',
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    color:
-                                        Colors.redAccent.withOpacity(0.9),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      if (_isRefreshing)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 8),
-                          child: Center(
-                            child: SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppTheme.primary,
-                                ),
                               ),
                             ),
-                          ),
-                        ),
-                    ],
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -456,41 +449,10 @@ class _HomeDashboardState extends State<_HomeDashboard>
   }
 }
 
-class _HeroSection extends StatefulWidget {
+class _HeroSection extends StatelessWidget {
   final String profileName;
-  final Animation<Offset> slide;
-  final Animation<double> fade;
 
-  const _HeroSection({
-    required this.profileName,
-    required this.slide,
-    required this.fade,
-  });
-
-  @override
-  State<_HeroSection> createState() => _HeroSectionState();
-}
-
-class _HeroSectionState extends State<_HeroSection>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _iconController;
-
-  @override
-  void initState() {
-    super.initState();
-    _iconController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 220),
-      lowerBound: -0.08,
-      upperBound: 0.08,
-    );
-  }
-
-  @override
-  void dispose() {
-    _iconController.dispose();
-    super.dispose();
-  }
+  const _HeroSection({required this.profileName});
 
   @override
   Widget build(BuildContext context) {
@@ -498,91 +460,79 @@ class _HeroSectionState extends State<_HeroSection>
 
     return GlassCard(
       padding: const EdgeInsets.all(18),
-      child: Stack(
+      child: Row(
         children: [
-          const Positioned.fill(child: _HeroParticlesOverlay()),
-          _Shimmer(
-            child: Row(
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: SlideTransition(
-                    position: widget.slide,
-                    child: FadeTransition(
-                      opacity: widget.fade,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Your daily flow',
-                            style: textTheme.headlineMedium?.copyWith(
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Warm-up • Strength • Fuel • Recover',
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: Colors.white70,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: const [
-                              _TagChip(label: 'AI Coach'),
-                              _TagChip(label: 'Dynamic plan'),
-                              _TagChip(label: 'Recovery tips'),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'Let\'s move, ${widget.profileName}',
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                Text(
+                  'Your daily flow',
+                  style: textTheme.headlineMedium?.copyWith(
+                    color: Colors.white,
                   ),
                 ),
-                const SizedBox(width: 12),
-                GestureDetector(
-                  onTapDown: (_) => _iconController.forward(),
-                  onTapUp: (_) => _iconController.reverse(),
-                  onTapCancel: () => _iconController.reverse(),
-                  child: AnimatedBuilder(
-                    animation: _iconController,
-                    builder: (context, child) {
-                      return Transform.rotate(
-                        angle: _iconController.value,
-                        child: child,
-                      );
-                    },
-                    child: Container(
-                      height: 92,
-                      width: 92,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: AppTheme.heroGradient(),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.primary.withOpacity(0.5),
-                            blurRadius: 20,
-                            offset: const Offset(0, 12),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.bolt,
-                        color: Colors.white,
-                        size: 42,
-                      ),
-                    ),
+                const SizedBox(height: 6),
+                Text(
+                  'Warm-up • Strength • Fuel • Recover',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: const [
+                    _TagChip(label: 'AI Coach'),
+                    _TagChip(label: 'Dynamic plan'),
+                    _TagChip(label: 'Recovery tips'),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  "Let's move, "+profileName,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: Colors.white,
                   ),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          ClipOval(
+            child: Container(
+              height: 92,
+              width: 92,
+              decoration: BoxDecoration(
+                gradient: AppTheme.heroGradient(),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primary.withOpacity(0.35),
+                    blurRadius: 16,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    'assets/images/download_4.jpg',
+                    fit: BoxFit.cover,
+                  ),
+                  Container(
+                    color: Colors.black.withOpacity(0.22),
+                  ),
+                  const Center(
+                    child: Icon(
+                      Icons.bolt,
+                      color: Colors.white,
+                      size: 36,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -591,125 +541,64 @@ class _HeroSectionState extends State<_HeroSection>
   }
 }
 
-class _HeroParticlesOverlay extends StatefulWidget {
-  const _HeroParticlesOverlay();
+class _ProgressStatCard extends StatelessWidget {
+  final String label;
+  final double value;
+  final IconData icon;
+  final Color color;
 
-  @override
-  State<_HeroParticlesOverlay> createState() => _HeroParticlesOverlayState();
-}
-
-class _HeroParticlesOverlayState extends State<_HeroParticlesOverlay>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 14),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  const _ProgressStatCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          return CustomPaint(
-            painter: _ParticlesPainter(progress: _controller.value),
-          );
-        },
+    final textTheme = Theme.of(context).textTheme;
+    final percent = (value * 100).clamp(0, 100).round();
+    return GlassCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                height: 38,
+                width: 38,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: color.withOpacity(0.12),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                label,
+                style: textTheme.bodyMedium?.copyWith(color: Colors.white70),
+              ),
+              const Spacer(),
+              Text(
+                '$percent%',
+                style:
+                    textTheme.titleLarge?.copyWith(color: Colors.white),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: value.clamp(0.0, 1.0),
+              minHeight: 8,
+              backgroundColor: Colors.white10,
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+        ],
       ),
-    );
-  }
-}
-
-class _ParticlesPainter extends CustomPainter {
-  final double progress;
-
-  _ParticlesPainter({required this.progress});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withOpacity(0.12)
-      ..style = PaintingStyle.fill;
-    final center = size.center(Offset.zero);
-    final baseRadius = math.min(size.width, size.height) * 0.55;
-
-    for (int i = 0; i < 16; i++) {
-      final angle = 2 * math.pi * i / 16 + progress * 2 * math.pi;
-      final r = baseRadius * (0.3 + (i % 5) * 0.1);
-      final dx = center.dx + r * math.cos(angle);
-      final dy = center.dy + r * math.sin(angle);
-      canvas.drawCircle(Offset(dx, dy), 2.2, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _ParticlesPainter oldDelegate) {
-    return oldDelegate.progress != progress;
-  }
-}
-
-class _Shimmer extends StatefulWidget {
-  final Widget child;
-
-  const _Shimmer({required this.child});
-
-  @override
-  State<_Shimmer> createState() => _ShimmerState();
-}
-
-class _ShimmerState extends State<_Shimmer>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return ShaderMask(
-          shaderCallback: (rect) {
-            final dx = rect.width * (_controller.value * 2 - 1);
-            return const LinearGradient(
-              colors: [
-                Colors.transparent,
-                Colors.white54,
-                Colors.transparent,
-              ],
-              stops: [0.2, 0.5, 0.8],
-            ).createShader(rect.shift(Offset(dx, 0)));
-          },
-          blendMode: BlendMode.srcATop,
-          child: child,
-        );
-      },
-      child: widget.child,
     );
   }
 }
@@ -728,69 +617,63 @@ class _TodayProgressRing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 900),
-      curve: Curves.easeOutCubic,
-      builder: (context, t, _) {
-        return Column(
-          children: [
-            SizedBox(
-              height: 160,
-              width: 160,
-              child: CustomPaint(
-                painter: _RingChartPainter(
-                  workout: workout * t,
-                  nutrition: nutrition * t,
-                  recovery: recovery * t,
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Today\'s progress',
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: Colors.white70,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${(workout * 100).round()}%',
-                        style: textTheme.headlineMedium?.copyWith(
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
+    return Column(
+      children: [
+        SizedBox(
+          height: 150,
+          width: 150,
+          child: CustomPaint(
+            painter: _RingChartPainter(
+              workout: workout,
+              nutrition: nutrition,
+              recovery: recovery,
+            ),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Today's progress",
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: Colors.white70,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${(workout * 100).round()}%',
+                    style: textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _LegendDot(
-                  color: Colors.greenAccent,
-                  label: 'Workout',
-                  value: workout,
-                ),
-                _LegendDot(
-                  color: AppTheme.secondary,
-                  label: 'Nutrition',
-                  value: nutrition,
-                ),
-                _LegendDot(
-                  color: Colors.amberAccent,
-                  label: 'Recovery',
-                  value: recovery,
-                ),
-              ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 16,
+          runSpacing: 8,
+          children: const [
+            _LegendDot(
+              color: AppTheme.primary,
+              label: 'Workout',
+              value: null,
+            ),
+            _LegendDot(
+              color: AppTheme.secondary,
+              label: 'Nutrition',
+              value: null,
+            ),
+            _LegendDot(
+              color: AppTheme.tertiary,
+              label: 'Recovery',
+              value: null,
             ),
           ],
-        );
-      },
+        ),
+      ],
     );
   }
 }
@@ -838,9 +721,9 @@ class _RingChartPainter extends CustomPainter {
       start += sweep;
     }
 
-    draw(workout, Colors.greenAccent);
+    draw(workout, AppTheme.primary);
     draw(nutrition, AppTheme.secondary);
-    draw(recovery, Colors.amberAccent);
+    draw(recovery, AppTheme.tertiary);
   }
 
   @override
@@ -854,7 +737,7 @@ class _RingChartPainter extends CustomPainter {
 class _LegendDot extends StatelessWidget {
   final Color color;
   final String label;
-  final double value;
+  final double? value;
 
   const _LegendDot({
     required this.color,
@@ -866,6 +749,7 @@ class _LegendDot extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           width: 10,
@@ -876,18 +760,9 @@ class _LegendDot extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: textTheme.labelLarge?.copyWith(color: Colors.white70),
-            ),
-            Text(
-              '${(value * 100).round()}%',
-              style: textTheme.bodySmall?.copyWith(color: Colors.white),
-            ),
-          ],
+        Text(
+          value == null ? label : '$label ${(value! * 100).round()}%',
+          style: textTheme.labelLarge?.copyWith(color: Colors.white70),
         ),
       ],
     );
@@ -895,7 +770,6 @@ class _LegendDot extends StatelessWidget {
 }
 
 class _QuickActionsSection extends StatelessWidget {
-  final AnimationController controller;
   final bool isNarrow;
   final bool hasError;
   final bool isLoading;
@@ -905,7 +779,6 @@ class _QuickActionsSection extends StatelessWidget {
   final VoidCallback onExercises;
 
   const _QuickActionsSection({
-    required this.controller,
     required this.isNarrow,
     required this.hasError,
     required this.isLoading,
@@ -940,7 +813,6 @@ class _QuickActionsSection extends StatelessWidget {
         completion: 0.72,
         isActive: true,
         index: 0,
-        controller: controller,
         onTap: onWorkout,
       ),
       _QuickActionCard(
@@ -950,7 +822,6 @@ class _QuickActionsSection extends StatelessWidget {
         color: AppTheme.secondary,
         completion: 0.56,
         index: 1,
-        controller: controller,
         onTap: onNutrition,
       ),
       _QuickActionCard(
@@ -960,7 +831,6 @@ class _QuickActionsSection extends StatelessWidget {
         color: Colors.amberAccent,
         completion: 0.34,
         index: 2,
-        controller: controller,
         onTap: onAi,
       ),
       _QuickActionCard(
@@ -970,7 +840,6 @@ class _QuickActionsSection extends StatelessWidget {
         color: Colors.purpleAccent,
         completion: 0.48,
         index: 3,
-        controller: controller,
         onTap: onExercises,
       ),
     ];
@@ -981,11 +850,11 @@ class _QuickActionsSection extends StatelessWidget {
       mainAxisSpacing: 12,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: isNarrow ? 1.8 : 2.1,
+      childAspectRatio: isNarrow ? 1.15 : 1.4,
       children: cards,
     );
 
-    return _ShakeOnError(hasError: hasError, child: grid);
+    return grid;
   }
 }
 
@@ -1031,7 +900,6 @@ class _QuickActionCard extends StatefulWidget {
   final double completion;
   final bool isActive;
   final int index;
-  final AnimationController controller;
   final VoidCallback onTap;
 
   const _QuickActionCard({
@@ -1041,7 +909,6 @@ class _QuickActionCard extends StatefulWidget {
     required this.color,
     required this.completion,
     required this.index,
-    required this.controller,
     required this.onTap,
     this.isActive = false,
   });
@@ -1055,153 +922,105 @@ class _QuickActionCardState extends State<_QuickActionCard> {
 
   @override
   Widget build(BuildContext context) {
-    final anim = CurvedAnimation(
-      parent: widget.controller,
-      curve: Interval(
-        0.1 * (widget.index + 1),
-        0.7 + 0.1 * widget.index,
-        curve: Curves.easeOutCubic,
-      ),
-    );
-
-    return FadeTransition(
-      opacity: anim,
-      child: SlideTransition(
-        position: Tween(begin: const Offset(0, 0.08), end: Offset.zero)
-            .animate(anim),
-        child: MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: AnimatedScale(
-            scale: _pressed ? 0.95 : 1,
-            duration: const Duration(milliseconds: 120),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: widget.onTap,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: AnimatedScale(
+        scale: _pressed ? 0.95 : 1,
+        duration: const Duration(milliseconds: 120),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: widget.onTap,
+            borderRadius: BorderRadius.circular(16),
+            splashColor: widget.color.withOpacity(0.18),
+            highlightColor: widget.color.withOpacity(0.12),
+            onHighlightChanged: (v) {
+              setState(() => _pressed = v);
+            },
+            child: Ink(
+              decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                splashColor: widget.color.withOpacity(0.28),
-                highlightColor: widget.color.withOpacity(0.18),
-                onHighlightChanged: (v) {
-                  setState(() => _pressed = v);
-                },
-                child: Ink(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: LinearGradient(
-                      colors: [
-                        widget.color.withOpacity(0.18),
-                        widget.color.withOpacity(0.32),
-                      ],
-                    ),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.1),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: widget.color.withOpacity(0.32),
-                        blurRadius: 18,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
+                color: AppTheme.surface.withOpacity(0.92),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.06),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.25),
+                    blurRadius: 16,
+                    offset: const Offset(0, 12),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            SizedBox(
-                              height: 40,
-                              width: 40,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 4,
-                                value: widget.completion,
-                                backgroundColor:
-                                    Colors.white.withOpacity(0.25),
-                                valueColor: const AlwaysStoppedAnimation(
-                                  Colors.white,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              height: 28,
-                              width: 28,
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                widget.icon,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      widget.label,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(
-                                            color: Colors.white70,
-                                          ),
-                                    ),
-                                  ),
-                                  if (widget.isActive)
-                                    Container(
-                                      padding:
-                                          const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        borderRadius:
-                                            BorderRadius.circular(12),
-                                        color: Colors.black.withOpacity(0.3),
-                                      ),
-                                      child: const Text(
-                                        'Active',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                widget.description,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleSmall
-                                    ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
-                            ],
+                        Container(
+                          height: 40,
+                          width: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: widget.color.withOpacity(0.16),
+                          ),
+                          child: Icon(
+                            widget.icon,
+                            color: widget.color,
                           ),
                         ),
-                        const Icon(
-                          Icons.chevron_right,
-                          color: Colors.white70,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            widget.label,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
                         ),
+                        if (widget.isActive)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: widget.color.withOpacity(0.18),
+                            ),
+                            child: const Text(
+                              'Active',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 6),
+                    Text(
+                      widget.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white70,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: widget.completion.clamp(0.0, 1.0),
+                        minHeight: 8,
+                        backgroundColor: Colors.white10,
+                        valueColor: AlwaysStoppedAnimation<Color>(widget.color),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -1481,7 +1300,6 @@ class _TemplatePlanCard extends StatelessWidget {
               ),
               TextButton.icon(
                 onPressed: () {
-                  // Navigate to profile / plan edit.
                   Navigator.pushNamed(context, '/profile');
                 },
                 style: TextButton.styleFrom(
@@ -1489,12 +1307,130 @@ class _TemplatePlanCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                 ),
                 icon: const Icon(Icons.edit, size: 18),
-                label: const Text('Edit'),
+                label: const Text('Profile'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _selectWorkoutTemplate(context),
+                  icon: const Icon(Icons.fitness_center, size: 18),
+                  label: Text(
+                    hasWorkout
+                        ? 'Change workout plan'
+                        : 'Choose workout plan',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _selectNutritionTemplate(context),
+                  icon: const Icon(Icons.restaurant_menu, size: 18),
+                  label: Text(
+                    hasNutrition
+                        ? 'Change nutrition plan'
+                        : 'Choose nutrition plan',
+                  ),
+                ),
               ),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _selectWorkoutTemplate(BuildContext context) async {
+    final appState = context.read<AppState>();
+    const templates = <String>[
+      'Fat loss · 3 days',
+      'Muscle gain · 4 days',
+      'General fitness · 3 days',
+    ];
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          itemCount: templates.length,
+          separatorBuilder: (_, __) => const Divider(color: Colors.white12),
+          itemBuilder: (context, index) {
+            final name = templates[index];
+            final isActive = name == workoutTemplate;
+            return ListTile(
+              title: Text(
+                name,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Colors.white,
+                    ),
+              ),
+              trailing: isActive
+                  ? const Icon(Icons.check, color: AppTheme.primary)
+                  : null,
+              onTap: () async {
+                await appState.setActivePlans(workoutTemplate: name);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                }
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _selectNutritionTemplate(BuildContext context) async {
+    final appState = context.read<AppState>();
+    const templates = <String>[
+      'Lean cut (low fat, high protein)',
+      'Maintenance balance',
+      'Muscle gain',
+    ];
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          itemCount: templates.length,
+          separatorBuilder: (_, __) => const Divider(color: Colors.white12),
+          itemBuilder: (context, index) {
+            final name = templates[index];
+            final isActive = name == nutritionTemplate;
+            return ListTile(
+              title: Text(
+                name,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Colors.white,
+                    ),
+              ),
+              trailing: isActive
+                  ? const Icon(Icons.check, color: AppTheme.primary)
+                  : null,
+              onTap: () async {
+                await appState.setActivePlans(nutritionTemplate: name);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                }
+              },
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -1526,41 +1462,15 @@ class _OfflineBadge extends StatelessWidget {
   }
 }
 
-class _BellReminderIcon extends StatefulWidget {
+class _BellReminderIcon extends StatelessWidget {
   const _BellReminderIcon();
 
   @override
-  State<_BellReminderIcon> createState() => _BellReminderIconState();
-}
-
-class _BellReminderIconState extends State<_BellReminderIcon>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-    _controller.repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return RotationTransition(
-      turns: Tween(begin: -0.02, end: 0.02).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-      ),
-      child: const Icon(Icons.notifications_active,
-          color: Colors.white70, size: 22),
+    return const Icon(
+      Icons.notifications_active,
+      color: Colors.white70,
+      size: 22,
     );
   }
 }

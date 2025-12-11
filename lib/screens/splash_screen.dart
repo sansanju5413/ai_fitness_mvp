@@ -49,25 +49,24 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppTheme.background,
       body: Stack(
         children: [
           Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: AppTheme.heroGradient(),
-              ),
+            child: Image.asset(
+              'assets/images/download.jpg',
+              fit: BoxFit.cover,
             ),
           ),
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                   colors: [
-                    Colors.black.withOpacity(0.35),
-                    Colors.black.withOpacity(0.75),
+                    AppTheme.background.withOpacity(0.75),
+                    Colors.black.withOpacity(0.7),
                   ],
                 ),
               ),
@@ -79,47 +78,56 @@ class _SplashScreenState extends State<SplashScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    height: 90,
-                    width: 90,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.14),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.35),
-                        width: 1.4,
+                  ClipOval(
+                    child: Container(
+                      height: 96,
+                      width: 96,
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.heroGradient(),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.primary.withOpacity(0.5),
+                            blurRadius: 28,
+                            spreadRadius: 6,
+                          ),
+                        ],
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primary.withOpacity(0.6),
-                          blurRadius: 24,
-                          spreadRadius: 4,
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.fitness_center,
-                      color: Colors.white,
-                      size: 38,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.asset(
+                            'assets/images/download_3.jpg',
+                            fit: BoxFit.cover,
+                          ),
+                          Container(
+                            color: Colors.black.withOpacity(0.2),
+                          ),
+                          const Center(
+                            child: Icon(
+                              Icons.auto_awesome,
+                              color: Colors.white,
+                              size: 34,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 18),
-                  const Text(
+                  Text(
                     'AI Fitness',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.6,
-                    ),
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          color: Colors.white,
+                          letterSpacing: -0.6,
+                        ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Train. Fuel. Recover. Smarter.',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 15,
-                    ),
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: Colors.white70),
                   ),
                   const SizedBox(height: 28),
                   const CircularProgressIndicator(

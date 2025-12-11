@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
@@ -22,24 +20,59 @@ class FitnessPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = scrollable
-        ? SingleChildScrollView(
-            padding: padding,
-            child: child,
-          )
-        : Padding(
-            padding: padding,
-            child: child,
-          );
+        ? SingleChildScrollView(padding: padding, child: child)
+        : Padding(padding: padding, child: child);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
+      backgroundColor: AppTheme.background,
       appBar: appBar,
       floatingActionButton: floatingActionButton,
       body: Stack(
         children: [
-          const _AnimatedGradientBackground(),
-          SafeArea(child: content),
+          Positioned(
+            top: -120,
+            left: -60,
+            child: Container(
+              height: 240,
+              width: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0x334F8BFF), Color(0x3361E294)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  stops: [0.1, 1.0],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -140,
+            right: -80,
+            child: Container(
+              height: 260,
+              width: 260,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.02),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withOpacity(0.02),
+                    AppTheme.background,
+                  ],
+                ),
+              ),
+              child: content,
+            ),
+          ),
         ],
       ),
     );
@@ -184,77 +217,17 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.35),
-            blurRadius: 14,
-            offset: const Offset(0, 10),
-          ),
-        ],
+    return Card(
+      color: AppTheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.white.withOpacity(0.05)),
       ),
-      child: Padding(
-        padding: padding,
-        child: child,
-      ),
+      elevation: 3,
+      shadowColor: Colors.black.withOpacity(0.2),
+      child: Padding(padding: padding, child: child),
     );
   }
 }
 
-class _AnimatedGradientBackground extends StatefulWidget {
-  const _AnimatedGradientBackground();
-
-  @override
-  State<_AnimatedGradientBackground> createState() =>
-      _AnimatedGradientBackgroundState();
-}
-
-class _AnimatedGradientBackgroundState
-    extends State<_AnimatedGradientBackground>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 12),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        final angle = _controller.value * 2 * math.pi;
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.heroGradient().colors.first.withOpacity(0.38),
-                AppTheme.heroGradient().colors.last.withOpacity(0.45),
-                Colors.deepPurple.withOpacity(0.18),
-              ],
-              stops: const [0.0, 0.65, 1.0],
-              transform: GradientRotation(angle),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
+// Animated background removed to keep the project animation-less.

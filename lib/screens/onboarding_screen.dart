@@ -53,6 +53,54 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.asset(
+                      'assets/images/Beginners_Workout_Plan_for_Weight_Gain_at_Home.jpg',
+                      fit: BoxFit.cover,
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.35),
+                            Colors.black.withOpacity(0.6),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Tailored to you',
+                            style: textTheme.headlineMedium
+                                ?.copyWith(color: Colors.white),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'We adjust workouts and meals as you log data.',
+                            style: textTheme.bodyMedium
+                                ?.copyWith(color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             Text(
               'We’ll adjust workouts, nutrition, and recovery to your data.',
               style: textTheme.bodyMedium?.copyWith(color: Colors.white70),
