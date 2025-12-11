@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
+import '../services/firestore_schema.dart';
 import '../services/local_data_service.dart';
 import '../services/simple_ai_service.dart';
 import '../services/gemini_ai_service.dart';
@@ -23,6 +24,9 @@ class AppState extends ChangeNotifier {
 
   List<Exercise> exercises = [];
   List<FoodItem> foods = [];
+  List<Map<String, dynamic>> workoutTemplates = [];
+  List<Map<String, dynamic>> nutritionTemplates = [];
+  List<Map<String, dynamic>> habitTemplates = [];
 
   bool loading = false;
 
@@ -34,6 +38,7 @@ class AppState extends ChangeNotifier {
           final existing = await _firestoreService.getUserProfile(user.uid);
           profile =
               existing ?? AppUser(uid: user.uid, email: user.email ?? '');
+          await _loadTemplates();
         } catch (_) {
           profile = AppUser(uid: user.uid, email: user.email ?? '');
         }
@@ -48,6 +53,29 @@ class AppState extends ChangeNotifier {
   Future<void> _initLocalData() async {
     exercises = await _localDataService.loadExercises();
     foods = await _localDataService.loadFoods();
+    notifyListeners();
+  }
+
+  Future<void> _loadTemplates() async {
+    workoutTemplates = await _firestoreService.getTemplates(
+      type: FirestoreSchema.templateTypeWorkout,
+    );
+    nutritionTemplates = await _firestoreService.getTemplates(
+      type: FirestoreSchema.templateTypeNutrition,
+    );
+    habitTemplates = await _firestoreService.getTemplates(
+      type: FirestoreSchema.templateTypeHabit,
+    );
+    notifyListeners();
+  }
+
+  /// Admin-only: seed starter templates into Firestore, then reload locally.
+  Future<void> seedTemplates() async {
+    loading = true;
+    notifyListeners();
+    await _firestoreService.seedTemplates();
+    await _loadTemplates();
+    loading = false;
     notifyListeners();
   }
 
@@ -88,6 +116,7 @@ class AppState extends ChangeNotifier {
   Future<void> setActivePlans({
     String? workoutTemplate,
     String? nutritionTemplate,
+    String? habitTemplate,
   }) async {
     if (profile == null) return;
     final updated = AppUser(
@@ -104,8 +133,16 @@ class AppState extends ChangeNotifier {
           workoutTemplate ?? profile!.activeWorkoutTemplate,
       activeNutritionTemplate:
           nutritionTemplate ?? profile!.activeNutritionTemplate,
+      activeHabitTemplate: habitTemplate ?? profile!.activeHabitTemplate,
     );
-    await updateProfile(updated);
+    profile = updated;
+    notifyListeners();
+    await _firestoreService.setActiveTemplates(
+      uid: profile!.uid,
+      workoutTemplate: workoutTemplate,
+      nutritionTemplate: nutritionTemplate,
+      habitTemplate: habitTemplate,
+    );
   }
 
   Future<void> logWorkout(Map<String, dynamic> session) async {

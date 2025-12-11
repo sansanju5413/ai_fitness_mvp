@@ -77,6 +77,192 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+class _OverallProgressBar extends StatelessWidget {
+  final double value;
+  const _OverallProgressBar({required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final percent = (value * 100).clamp(0, 100).round();
+    return GlassCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Overall progress',
+                style: textTheme.titleMedium?.copyWith(color: Colors.white),
+              ),
+              Text(
+                '$percent%',
+                style: textTheme.titleMedium?.copyWith(color: Colors.white),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: LinearProgressIndicator(
+              value: value.clamp(0.0, 1.0),
+              minHeight: 10,
+              backgroundColor: Colors.white12,
+              valueColor: const AlwaysStoppedAnimation(AppTheme.primary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NextWorkoutCard extends StatelessWidget {
+  final String title;
+  final String workoutName;
+  final String duration;
+  final int reps;
+  final int sets;
+  final int exercises;
+  final String actionLabel;
+  final VoidCallback onTap;
+
+  const _NextWorkoutCard({
+    required this.title,
+    required this.workoutName,
+    required this.duration,
+    required this.reps,
+    required this.sets,
+    required this.exercises,
+    required this.onTap,
+    this.actionLabel = 'Start workout',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1C1F26), Color(0xFF0F1117)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: Colors.orangeAccent,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.flash_on, color: Colors.orangeAccent, size: 14),
+                    SizedBox(width: 4),
+                    Text(
+                      'Helios',
+                      style: TextStyle(color: Colors.orangeAccent, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            workoutName,
+            style: textTheme.headlineSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 16,
+            runSpacing: 6,
+            children: [
+              _WorkoutStat(label: 'Duration', value: duration),
+              _WorkoutStat(label: 'Reps', value: '$reps'),
+              _WorkoutStat(label: 'Sets', value: '$sets'),
+              _WorkoutStat(label: 'Exercise', value: '$exercises'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton(
+              onPressed: onTap,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                backgroundColor: Colors.orangeAccent,
+                foregroundColor: Colors.black87,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(actionLabel),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WorkoutStat extends StatelessWidget {
+  final String label;
+  final String value;
+  const _WorkoutStat({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: textTheme.bodySmall?.copyWith(color: Colors.white70),
+        ),
+        Text(
+          value,
+          style: textTheme.titleMedium?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
 class _HomeDashboard extends StatefulWidget {
   final String profileName;
   final String? workoutTemplate;
@@ -251,82 +437,68 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          RepaintBoundary(
-                            child: _isLoading
-                                ? const _HeroSkeleton()
-                                : _HeroSection(profileName: widget.profileName),
-                          ),
-                          const SizedBox(height: 16),
-                          if (_isOffline) const _OfflineBadge(),
-                          if (_isOffline) const SizedBox(height: 8),
-                          LayoutBuilder(
-                            builder: (context, size) {
-                              final compact = size.maxWidth < 420;
-                              return Wrap(
-                                spacing: 10,
-                                runSpacing: 10,
-                                children: [
-                                  SizedBox(
-                                    width: compact ? (size.maxWidth - 10) / 2 : null,
-                                    child: _ProgressStatCard(
-                                      label: 'Workout',
-                                      value: _workoutCompletion,
-                                      icon: Icons.fitness_center,
-                                      color: AppTheme.primary,
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: compact ? (size.maxWidth - 10) / 2 : null,
-                                    child: _ProgressStatCard(
-                                      label: 'Nutrition',
-                                      value: _nutritionCompletion,
-                                      icon: Icons.restaurant,
-                                      color: AppTheme.secondary,
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: compact ? (size.maxWidth - 10) / 2 : null,
-                                    child: _ProgressStatCard(
-                                      label: 'Recovery',
-                                      value: _recoveryScore,
-                                      icon: Icons.health_and_safety,
-                                      color: AppTheme.tertiary,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          RepaintBoundary(
-                            child: _TemplatePlanCard(
-                              workoutTemplate: widget.workoutTemplate,
-                              nutritionTemplate: widget.nutritionTemplate,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          SectionHeader(
-                            title: 'Focus for today',
-                            subtitle: 'Quick entries built for mobile',
-                            trailing: IconButton(
-                              icon: const Icon(Icons.refresh, color: Colors.white70),
-                              onPressed: _onRefresh,
-                            ),
+                          _isLoading
+                              ? const _HeroSkeleton()
+                              : _HeroSection(profileName: widget.profileName),
+                          const SizedBox(height: 14),
+                          if (_isOffline) ...[
+                            const _OfflineBadge(),
+                            const SizedBox(height: 10),
+                          ],
+                          _OverallProgressBar(
+                            value: ((_workoutCompletion + _nutritionCompletion + _recoveryScore) / 3)
+                                .clamp(0.0, 1.0),
                           ),
                           const SizedBox(height: 12),
-                          RepaintBoundary(
-                            child: _isLoading
-                                ? const _ProgressRingSkeleton()
-                                : GlassCard(
-                                    padding: const EdgeInsets.all(14),
-                                    child: _TodayProgressRing(
-                                      workout: _workoutCompletion,
-                                      nutrition: _nutritionCompletion,
-                                      recovery: _recoveryScore,
-                                    ),
-                                  ),
+                          _NextWorkoutCard(
+                            title: 'Your next workout',
+                            workoutName: widget.workoutTemplate ?? 'AI full body',
+                            duration: '35 minutes',
+                            reps: 12,
+                            sets: 4,
+                            exercises: 6,
+                            onTap: () => _safeAction(() async {
+                              await Navigator.of(context).push(
+                                _slideRightRoute(const AiWorkoutScreen()),
+                              );
+                            }),
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 10),
+                          _NextWorkoutCard(
+                            title: 'Your last workout',
+                            workoutName: 'Core finisher',
+                            duration: '25 minutes',
+                            reps: 10,
+                            sets: 3,
+                            exercises: 5,
+                            actionLabel: 'Redo workout',
+                            onTap: () => _safeAction(() async {
+                              await Navigator.of(context).push(
+                                _slideRightRoute(const AiWorkoutScreen()),
+                              );
+                            }),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  icon: const Icon(Icons.add),
+                                  label: const Text('Create new plan'),
+                                  onPressed: () => Navigator.pushNamed(context, '/ai-workout'),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  icon: const Icon(Icons.bar_chart),
+                                  label: const Text('See metrics'),
+                                  onPressed: () => Navigator.pushNamed(context, '/profile'),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
                           RepaintBoundary(
                             child: _QuickActionsSection(
                               isNarrow: isNarrow,
@@ -458,7 +630,23 @@ class _HeroSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return GlassCard(
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1F2937), Color(0xFF111827)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.28),
+            blurRadius: 14,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
       padding: const EdgeInsets.all(18),
       child: Row(
         children: [
@@ -467,14 +655,14 @@ class _HeroSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Your daily flow',
+                  'Welcome back, $profileName',
                   style: textTheme.headlineMedium?.copyWith(
                     color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Warm-up • Strength • Fuel • Recover',
+                  'Train smarter with AI plans tailored to you.',
                   style: textTheme.bodyMedium?.copyWith(
                     color: Colors.white70,
                   ),
@@ -489,21 +677,14 @@ class _HeroSection extends StatelessWidget {
                     _TagChip(label: 'Recovery tips'),
                   ],
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  "Let's move, "+profileName,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: Colors.white,
-                  ),
-                ),
               ],
             ),
           ),
           const SizedBox(width: 12),
           ClipOval(
             child: Container(
-              height: 92,
-              width: 92,
+              height: 82,
+              width: 82,
               decoration: BoxDecoration(
                 gradient: AppTheme.heroGradient(),
                 boxShadow: [
@@ -526,9 +707,9 @@ class _HeroSection extends StatelessWidget {
                   ),
                   const Center(
                     child: Icon(
-                      Icons.bolt,
+                      Icons.fitness_center,
                       color: Colors.white,
-                      size: 36,
+                      size: 30,
                     ),
                   ),
                 ],
@@ -1232,6 +1413,9 @@ class _TemplatePlanCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final hasWorkout = workoutTemplate != null;
     final hasNutrition = nutritionTemplate != null;
+    final appState = context.watch<AppState>();
+    final workoutOptions = appState.workoutTemplates.map((t) => t['name'] as String).toList();
+    final nutritionOptions = appState.nutritionTemplates.map((t) => t['name'] as String).toList();
 
     return GlassCard(
       padding: const EdgeInsets.all(14),
@@ -1316,7 +1500,11 @@ class _TemplatePlanCard extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => _selectWorkoutTemplate(context),
+                  onPressed: () => _selectWorkoutTemplate(
+                    context,
+                    options: workoutOptions,
+                    onSeed: appState.seedTemplates,
+                  ),
                   icon: const Icon(Icons.fitness_center, size: 18),
                   label: Text(
                     hasWorkout
@@ -1328,7 +1516,11 @@ class _TemplatePlanCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => _selectNutritionTemplate(context),
+                  onPressed: () => _selectNutritionTemplate(
+                    context,
+                    options: nutritionOptions,
+                    onSeed: appState.seedTemplates,
+                  ),
                   icon: const Icon(Icons.restaurant_menu, size: 18),
                   label: Text(
                     hasNutrition
@@ -1344,13 +1536,13 @@ class _TemplatePlanCard extends StatelessWidget {
     );
   }
 
-  Future<void> _selectWorkoutTemplate(BuildContext context) async {
+  Future<void> _selectWorkoutTemplate(
+    BuildContext context, {
+    required List<String> options,
+    required Future<void> Function() onSeed,
+  }) async {
     final appState = context.read<AppState>();
-    const templates = <String>[
-      'Fat loss · 3 days',
-      'Muscle gain · 4 days',
-      'General fitness · 3 days',
-    ];
+    final templates = options;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -1359,6 +1551,9 @@ class _TemplatePlanCard extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
+        if (templates.isEmpty) {
+          return _EmptyTemplates(onSeed: onSeed, label: 'workout');
+        }
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           itemCount: templates.length,
@@ -1389,13 +1584,13 @@ class _TemplatePlanCard extends StatelessWidget {
     );
   }
 
-  Future<void> _selectNutritionTemplate(BuildContext context) async {
+  Future<void> _selectNutritionTemplate(
+    BuildContext context, {
+    required List<String> options,
+    required Future<void> Function() onSeed,
+  }) async {
     final appState = context.read<AppState>();
-    const templates = <String>[
-      'Lean cut (low fat, high protein)',
-      'Maintenance balance',
-      'Muscle gain',
-    ];
+    final templates = options;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -1404,6 +1599,9 @@ class _TemplatePlanCard extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
+        if (templates.isEmpty) {
+          return _EmptyTemplates(onSeed: onSeed, label: 'nutrition');
+        }
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           itemCount: templates.length,
@@ -1431,6 +1629,49 @@ class _TemplatePlanCard extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _EmptyTemplates extends StatelessWidget {
+  final Future<void> Function() onSeed;
+  final String label;
+  const _EmptyTemplates({required this.onSeed, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'No $label templates found',
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(color: Colors.white),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Load starter templates to continue.',
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(color: Colors.white70),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.download),
+            label: const Text('Load starter templates'),
+            onPressed: () async {
+              await onSeed();
+              if (context.mounted) Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
     );
   }
 }

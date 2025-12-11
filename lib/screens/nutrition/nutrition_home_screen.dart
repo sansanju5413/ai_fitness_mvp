@@ -110,53 +110,59 @@ class _NutritionHomeScreenState extends State<NutritionHomeScreen>
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(14),
-                child: AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Image.asset(
-                        'assets/images/Schwinn_IC3_Indoor_Cycling_Bike_Review.jpg',
-                        fit: BoxFit.cover,
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black.withOpacity(0.55),
-                              Colors.black.withOpacity(0.35),
-                            ],
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isNarrow = constraints.maxWidth < 360;
+                    final aspect = isNarrow ? (4 / 3) : (16 / 9);
+                    return AspectRatio(
+                      aspectRatio: aspect,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.asset(
+                            'assets/images/Schwinn_IC3_Indoor_Cycling_Bike_Review.jpg',
+                            fit: BoxFit.cover,
                           ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Text(
-                              'Fuel your training',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineMedium
-                                  ?.copyWith(color: Colors.white),
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.black.withOpacity(0.55),
+                                  Colors.black.withOpacity(0.35),
+                                ],
+                              ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Stay on target with clear macros and hydration.',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(color: Colors.white70),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(
+                                  'Fuel your training',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(color: Colors.white),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Stay on target with clear macros and hydration.',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(color: Colors.white70),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 14),
@@ -608,17 +614,27 @@ class _QuickActions extends StatelessWidget {
       ('Recent Foods', Icons.history_rounded),
       ('Favorites', Icons.star_border_rounded),
     ];
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: items
-          .map(
-            (item) => _QuickActionButton(
-              label: item.$1,
-              icon: item.$2,
-              onTap: () => onTap(item.$1),
-            ),
-          )
-          .toList(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 380;
+        final size = isNarrow ? 52.0 : 60.0;
+        final spacing = isNarrow ? 8.0 : 12.0;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          alignment: WrapAlignment.spaceBetween,
+          children: items
+              .map(
+                (item) => _QuickActionButton(
+                  label: item.$1,
+                  icon: item.$2,
+                  onTap: () => onTap(item.$1),
+                  size: size,
+                ),
+              )
+              .toList(),
+        );
+      },
     );
   }
 }
@@ -627,11 +643,13 @@ class _QuickActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback onTap;
+  final double? size;
 
   const _QuickActionButton({
     required this.label,
     required this.icon,
     required this.onTap,
+    this.size,
   });
 
   @override
@@ -642,8 +660,8 @@ class _QuickActionButton extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            height: 60,
-            width: 60,
+            height: size ?? 60,
+            width: size ?? 60,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.white12,

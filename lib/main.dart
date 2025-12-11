@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_state.dart';
 import 'theme/app_theme.dart';
+import 'services/firestore_schema.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
@@ -19,7 +21,22 @@ import 'screens/profile_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Auto-seed starter templates locally if they are missing.
+  await _maybeSeedTemplates();
   runApp(const MyApp());
+}
+
+Future<void> _maybeSeedTemplates() async {
+  try {
+    final db = FirebaseFirestore.instance;
+    final templates = await db.collection('templates').limit(1).get();
+    if (templates.docs.isEmpty) {
+      // One-time seed using our helper.
+      await FirestoreSeeder(db).seedTemplates();
+    }
+  } catch (_) {
+    // Best-effort; ignore in release to avoid blocking app start.
+  }
 }
 
 class MyApp extends StatelessWidget {

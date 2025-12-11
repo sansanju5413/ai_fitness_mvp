@@ -10,6 +10,7 @@ class AppUser {
   final String? activityLevel; // sedentary, moderate, active
   final String? activeWorkoutTemplate;
   final String? activeNutritionTemplate;
+  final String? activeHabitTemplate;
 
   AppUser({
     required this.uid,
@@ -23,6 +24,7 @@ class AppUser {
     this.activityLevel,
     this.activeWorkoutTemplate,
     this.activeNutritionTemplate,
+    this.activeHabitTemplate,
   });
 
   Map<String, dynamic> toMap() {
@@ -38,6 +40,7 @@ class AppUser {
       'activityLevel': activityLevel,
       'activeWorkoutTemplate': activeWorkoutTemplate,
       'activeNutritionTemplate': activeNutritionTemplate,
+      'activeHabitTemplate': activeHabitTemplate,
     };
   }
 
@@ -54,6 +57,7 @@ class AppUser {
       activityLevel: map['activityLevel'] as String?,
       activeWorkoutTemplate: map['activeWorkoutTemplate'] as String?,
       activeNutritionTemplate: map['activeNutritionTemplate'] as String?,
+      activeHabitTemplate: map['activeHabitTemplate'] as String?,
     );
   }
 }
