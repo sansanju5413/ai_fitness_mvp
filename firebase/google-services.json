@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "176933143278-5056h8jjg53kba69siqlumr7lohthhec.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.modarb.android",
+            "certificate_hash": "6e79c3abdc9643617274efe05fdc0c14beac7220"
+          }
+        },
+        {
           "client_id": "176933143278-mpberki84uqvqg8jkcjpb1t90086o5pj.apps.googleusercontent.com",
           "client_type": 3
         }

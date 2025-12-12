@@ -1,4 +1,4 @@
-# AI Fitness MVP (Flutter)
+   `1AI Fitness MVP (Flutter)
 
 This is an MVP Flutter app for an AI-powered fitness, workout, and nutrition planner.
 

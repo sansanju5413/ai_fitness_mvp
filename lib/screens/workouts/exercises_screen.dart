@@ -250,16 +250,44 @@ class _ExercisesScreenState extends State<ExercisesScreen>
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 700;
-        final crossAxisCount = isWide ? 2 : 1;
+        if (!isWide) {
+          return ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final ex = items[index];
+              return _ExerciseCard(
+                exercise: ex,
+                isFavorite: _favorites.contains(ex.id),
+                weight: _weightLog[ex.id] ?? 0,
+                reps: _repLog[ex.id] ?? 0,
+                onToggleFavorite: () {
+                  setState(() {
+                    if (_favorites.contains(ex.id)) {
+                      _favorites.remove(ex.id);
+                    } else {
+                      _favorites.add(ex.id);
+                    }
+                  });
+                },
+                onLogWeight: (value) =>
+                    setState(() => _weightLog[ex.id] = value),
+                onLogReps: (value) => setState(() => _repLog[ex.id] = value),
+              );
+            },
+          );
+        }
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: items.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: isWide ? 1.9 : 1.2,
+            childAspectRatio: 1.6,
           ),
           itemBuilder: (context, index) {
             final ex = items[index];

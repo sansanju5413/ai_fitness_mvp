@@ -435,7 +435,7 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                     child: Padding(
                       padding: padding,
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _isLoading
                               ? const _HeroSkeleton()
